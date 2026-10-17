@@ -1,0 +1,17 @@
+meta {
+  name: Reject nonexistent order
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/orders/ORD-does-not-exist
+  body: none
+  auth: none
+}
+
+tests {
+  test("a nonexistent order returns 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

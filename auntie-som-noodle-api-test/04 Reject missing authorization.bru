@@ -1,0 +1,24 @@
+meta {
+  name: Reject missing authorization
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "itemId": 1,
+    "quantity": 1
+  }
+}
+
+tests {
+  test("orders require authorization", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

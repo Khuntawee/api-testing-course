@@ -1,0 +1,18 @@
+meta {
+  name: Verify stock after valid order
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+tests {
+  test("valid order reduces stock by its quantity", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().find(item => item.id === 1).stock).to.equal(0);
+  });
+}

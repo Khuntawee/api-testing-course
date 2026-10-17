@@ -1,0 +1,18 @@
+meta {
+  name: Verify stock after rejected overstock
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+tests {
+  test("rejected overstock leaves inventory unchanged", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().find(item => item.id === 2).stock).to.equal(bru.getVar("initialOtherStock"));
+  });
+}

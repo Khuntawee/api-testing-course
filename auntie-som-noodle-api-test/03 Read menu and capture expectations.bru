@@ -1,0 +1,30 @@
+meta {
+  name: Read menu and capture expectations
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+script:post-response {
+  const menu = res.getBody();
+  const item = menu.find(item => item.id === 1);
+  const other = menu.find(item => item.id === 2);
+  bru.setVar("expectedTotal", item.price * 2);
+  bru.setVar("initialOtherStock", other.stock);
+}
+
+tests {
+  test("fresh menu contains available priced items", function () {
+    expect(res.getStatus()).to.equal(200);
+    const item = res.getBody().find(item => item.id === 1);
+    const other = res.getBody().find(item => item.id === 2);
+    expect(item.price).to.be.a("number").and.greaterThan(0);
+    expect(item.stock).to.equal(2);
+    expect(other.stock).to.equal(1);
+  });
+}

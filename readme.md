@@ -154,3 +154,44 @@ Your task is to create a comprehensive Bruno collection that validates the entir
 
 ---
 *Good luck. Auntie Som is counting on you!* 🍜🔥
+
+---
+
+## Local Bruno collection and audit results
+
+The `auntie-som-noodle-api-test` collection contains ordered, automated tests for the login and order workflows. The original backend is unchanged. The checked-in example environment has no token; the login script captures a fresh token into the local environment.
+
+### Set up and run
+
+From the repository root, with Python 3.10+ and Bruno Desktop or the Bruno CLI installed:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install 'Flask>=3.0,<4'
+mkdir -p auntie-som-noodle-api-test/environments
+cp auntie-som-noodle-api-test/local.bru.example auntie-som-noodle-api-test/environments/local.bru
+.venv/bin/flask --app auntie-som-noodle-api/app.py run --host 127.0.0.1 --port 5000
+```
+
+Leave the server running. In another terminal, from the repository root:
+
+```bash
+cd auntie-som-noodle-api-test
+bru run --env local
+```
+
+For the desktop app, open the `auntie-som-noodle-api-test` folder as a collection, select the `local` environment, and run the entire collection in sequence. The login and menu requests establish values used by later requests. The create-order and overstock scenarios modify in-memory stock: **stop and restart the API before every complete run**, including repeats in the desktop app. The initial stock checks detect a stale server. Tests expect a fresh server with the original menu. The expected total is calculated from the menu response and ordered quantity; the example total in the original API reference is inconsistent with its menu price.
+
+Bruno may save the captured token to `environments/local.bru`. That machine-local file and `.venv` are ignored by Git; use the supplied example to recreate the environment. The CLI exits with a nonzero status while the backend defects below remain, which is expected for this audit.
+
+### Results and reproduction
+
+On 2026-10-17, Bruno CLI 4.2.1 and Flask 3.1.3 were run twice, each time against a freshly restarted server. Both runs completed all 13 requests: **8 tests passed and 5 failed**. The failures identify three backend defects:
+
+| Defect | Reproduction and expected behavior | Observed behavior and detecting tests |
+| --- | --- | --- |
+| Incorrect order total | On a fresh server, log in, read the menu, and order two of item 1. Its menu price is 50, so the total should be 100. | Create and retrieve both return 95. `07 Create valid order` and `08 Retrieve created order` compare against the menu price times quantity. |
+| Overstock accepted and inventory corrupted | On a fresh server, log in and order two of item 2, whose stock is 1. The order should be rejected with 400 and stock should remain 1. | The API returns 200 and the next menu shows stock -1. `11 Reject order above available stock` and `12 Verify stock after rejected overstock` check both effects. |
+| Missing order reported as successful | Request `GET /orders/ORD-does-not-exist`. A missing order should return 404. | The API returns 200 with an error body. `13 Reject nonexistent order` checks the status. |
+
+The other checks passed: login/token capture, invalid login, initial menu data, missing and invalid authentication, unknown item rejection, stock reduction after a valid order, and rejection of an already out-of-stock item. These results describe the original API; no fixes have been applied to it.

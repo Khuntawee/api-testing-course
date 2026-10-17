@@ -1,0 +1,35 @@
+meta {
+  name: Create valid order
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "itemId": 1,
+    "quantity": 2
+  }
+}
+
+script:post-response {
+  bru.setVar("orderId", res.getBody().orderId);
+}
+
+tests {
+  test("order is created with the menu price times quantity", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().orderId).to.be.a("string").and.not.empty;
+    expect(res.getBody().status).to.equal("created");
+    expect(res.getBody().totalPrice).to.equal(bru.getVar("expectedTotal"));
+  });
+}
